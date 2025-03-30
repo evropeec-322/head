@@ -7,22 +7,40 @@ getgenv().Keybind = Enum.KeyCode.K -- Кнопка включения/выклю
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- // Функция изменения хитбокса
+-- // Функция изменения хитбокса (добавление невидимого Part)
 function ModifyHitbox(state)
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character then
             local head = player.Character:FindFirstChild("Head")
             if head then
+                local fakeHitbox = head:FindFirstChild("HitboxPart")
+
                 if state then
-                    head.Size = getgenv().HitboxSize
-                    head.Transparency = getgenv().HitboxTransparency
-                    head.Material = Enum.Material.Neon
-                    head.CanCollide = false
+                    -- Если хитбокс уже есть, обновляем
+                    if not fakeHitbox then
+                        fakeHitbox = Instance.new("Part")
+                        fakeHitbox.Name = "HitboxPart"
+                        fakeHitbox.Parent = head
+                        fakeHitbox.CanCollide = false
+                        fakeHitbox.Anchored = false
+                        fakeHitbox.Transparency = getgenv().HitboxTransparency
+                        fakeHitbox.Material = Enum.Material.Neon
+                        fakeHitbox.Color = Color3.fromRGB(255, 0, 0)
+                        fakeHitbox.Massless = true
+
+                        -- Привязываем к голове
+                        local weld = Instance.new("Weld")
+                        weld.Part0 = head
+                        weld.Part1 = fakeHitbox
+                        weld.Parent = fakeHitbox
+                    end
+
+                    fakeHitbox.Size = getgenv().HitboxSize
                 else
-                    head.Size = Vector3.new(2, 1, 1) -- Стандартный размер головы
-                    head.Transparency = 0
-                    head.Material = Enum.Material.Plastic
-                    head.CanCollide = true
+                    -- Удаляем хитбокс
+                    if fakeHitbox then
+                        fakeHitbox:Destroy()
+                    end
                 end
             end
         end
