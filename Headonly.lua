@@ -1,53 +1,39 @@
 -- // Настройки
 getgenv().HitboxSize = Vector3.new(15, 15, 15) -- Размер хитбокса головы
-getgenv().HitboxTransparency = 0.7 -- Прозрачность (0 = видно, 1 = невидимо)
+getgenv().HitboxTransparency = 0.5 -- Прозрачность (0 = видно, 1 = невидимо)
 getgenv().HitboxEnabled = false -- Включено/выключено (по умолчанию выключено)
 getgenv().Keybind = Enum.KeyCode.K -- Кнопка включения/выключения
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- // Функция изменения хитбокса (добавление невидимого Part)
+-- // Функция изменения хитбокса
 function ModifyHitbox(state)
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character then
             local head = player.Character:FindFirstChild("Head")
             if head then
-                local fakeHitbox = head:FindFirstChild("HitboxPart")
-
                 if state then
-                    -- Если хитбокс уже есть, обновляем
-                    if not fakeHitbox then
-                        fakeHitbox = Instance.new("Part")
-                        fakeHitbox.Name = "HitboxPart"
-                        fakeHitbox.Parent = head
-                        fakeHitbox.CanCollide = false
-                        fakeHitbox.Anchored = false
-                        fakeHitbox.Transparency = getgenv().HitboxTransparency
-                        fakeHitbox.Material = Enum.Material.Neon
-                        fakeHitbox.Color = Color3.fromRGB(255, 0, 0)
-                        fakeHitbox.Massless = true
-
-                        -- Привязываем к голове
-                        local weld = Instance.new("Weld")
-                        weld.Part0 = head
-                        weld.Part1 = fakeHitbox
-                        weld.Parent = fakeHitbox
-                    end
-
-                    fakeHitbox.Size = getgenv().HitboxSize
+                    -- Увеличиваем сам хитбокс головы
+                    head.Size = getgenv().HitboxSize
+                    head.Transparency = getgenv().HitboxTransparency
+                    head.Material = Enum.Material.Neon
+                    head.Color = Color3.fromRGB(255, 0, 0)
+                    head.CanCollide = false -- Отключаем столкновения
+                    head.Massless = true -- Делаем его невесомым
                 else
-                    -- Удаляем хитбокс
-                    if fakeHitbox then
-                        fakeHitbox:Destroy()
-                    end
+                    -- Возвращаем стандартные параметры
+                    head.Size = Vector3.new(2, 1, 1) -- Стандартный размер головы
+                    head.Transparency = 0
+                    head.Material = Enum.Material.SmoothPlastic
+                    head.Color = Color3.fromRGB(255, 255, 255)
                 end
             end
         end
     end
 end
 
--- // Автообновление при входе новых игроков
+-- // Автообновление при появлении новых игроков
 Players.PlayerAdded:Connect(function(player)
     player.CharacterAdded:Connect(function()
         if getgenv().HitboxEnabled then
@@ -56,7 +42,7 @@ Players.PlayerAdded:Connect(function(player)
     end)
 end)
 
--- // Обработчик клавиш
+-- // Обработчик клавиш (переключение хитбокса)
 game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
     if not gameProcessed and input.KeyCode == getgenv().Keybind then
         getgenv().HitboxEnabled = not getgenv().HitboxEnabled
@@ -65,5 +51,5 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, gameProce
     end
 end)
 
--- // Начальное применение хитбокса
+-- // Применяем хитбокс при запуске
 ModifyHitbox(getgenv().HitboxEnabled)
